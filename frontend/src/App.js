@@ -1,7 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter} from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
-import HeroSection from './components/sections/HeroSection';
+// import HeroSection from './components/sections/HeroSection';
 import SpaceBackground from './components/layout/SpaceBackground';
 
 function App() {

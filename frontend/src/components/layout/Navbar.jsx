@@ -1,180 +1,259 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 
-const Navbar = () => {
+const NAV_HEIGHT = 96;
+
+//add more link here
+const navItems = [
+  { name: "Home", path: "/" },
+  { name: "Events", path: "/events" },
+  { name: "Gallery", path: "/gallery" },
+  { name: "Contact", path: "/contact" },
+];
+
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+const panelVariants = {
+  hidden: { y: -20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const linkVariants = {
+  hidden: { y: -10, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+};
+
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+  const toggleRef = useRef(null);
+  const panelRef = useRef(null);
+  const previousActiveRef = useRef(null);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+  // Scroll detection
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Events', path: '/events' },
-    { name: 'Proshow', path: '/proshow' },
-    { name: 'Contact', path: '/contact' },
-  ];
+  // Close on route change
+  useEffect(() => setOpen(false), [location.pathname]);
+
+  // Close menu if resized to desktop
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const handler = (e) => e.matches && setOpen(false);
+    mql.addEventListener?.("change", handler);
+    return () => mql.removeEventListener?.("change", handler);
+  }, []);
+
+  // Prevent body scroll when open
+  useEffect(() => {
+    const original = document.documentElement.style.getPropertyValue("overflow");
+    document.documentElement.style.overflow = open ? "hidden" : original || "";
+    return () => (document.documentElement.style.overflow = original || "");
+  }, [open]);
+
+  // Focus trap + escape
+  useEffect(() => {
+    if (!open) return;
+    previousActiveRef.current = document.activeElement;
+
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const container = panelRef.current;
+    const focusable = container ? Array.from(container.querySelectorAll(focusableSelector)) : [];
+    if (focusable.length) focusable[0].focus();
+
+    const handleKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Tab") {
+        const focusableNow = container ? Array.from(container.querySelectorAll(focusableSelector)) : [];
+        if (focusableNow.length === 0) return;
+        const first = focusableNow[0];
+        const last = focusableNow[focusableNow.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  // Click outside closes
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      const panel = panelRef.current;
+      const toggle = toggleRef.current;
+      if (!panel) return;
+      if (panel.contains(e.target)) return;
+      if (toggle && toggle.contains(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [open]);
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-gray-900/80 backdrop-blur-md border-b border-white/10'
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* here we need logo instead of text */}
-            <Link to="/" className="text-white text-2xl font-bold tracking-wider">
-              <img 
-                src="/logo512.png" 
-                alt="Incridea Logo" 
-                className="h-60 transition-all duration-300 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.8)] hover:brightness-110 hover:contrast-110" 
-              />
-            </Link>
-          </motion.div>
-
-          {/* Navigation Links - Centered */}
-          <div className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-            {navItems.map((item, index) => (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Link
-                  to={item.path}
-                  className={`hover-underline text-sm font-bold transition-colors duration-200 ${
-                    location.pathname === item.path
-                      ? 'text-white'
-                      : 'text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Login Button */}
-          {/* <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Link to="/login">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 py-2.5 text-sm font-medium text-white border border-white/30 rounded-full hover:bg-white/10 transition-all duration-200 backdrop-blur-sm"
-              >
-                Login
-              </motion.button>
-            </Link>
-          </motion.div> */}
-
-          {/* Mobile Menu Button */}
-          <MobileMenuButton />
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <MobileMenu navItems={navItems} />
-    </motion.nav>
-  );
-};
-
-// Mobile Menu Button Component
-const MobileMenuButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="md:hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-        aria-label="Toggle menu"
+    <header className="relative">
+      {/* Navbar container */}
+      <motion.nav
+        initial={{ y: -12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-gray-900/85 backdrop-blur-md border-b border-white/10 shadow-sm"
+            : "bg-transparent"
+        }`}
+        style={{ WebkitBackdropFilter: scrolled ? "blur(6px)" : undefined }}
       >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          {isOpen ? (
-            <path d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-    </div>
-  );
-};
-
-// Mobile Menu Component
-const MobileMenu = ({ navItems }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
-
-  return (
-    <motion.div
-      initial={false}
-      animate={isOpen ? 'open' : 'closed'}
-      variants={{
-        open: { height: 'auto', opacity: 1 },
-        closed: { height: 0, opacity: 0 },
-      }}
-      transition={{ duration: 0.3 }}
-      className="md:hidden overflow-hidden bg-gray-900/95 backdrop-blur-md"
-    >
-      <div className="px-6 py-4 space-y-4">
-        {navItems.map((item) => (
-          <Link
-            key={item.name}
-            to={item.path}
-            onClick={() => setIsOpen(false)}
-            className={`hover-underline block text-base font-bold transition-colors ${
-              location.pathname === item.path
-                ? 'text-white'
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            {item.name}
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+          {/* ✅ Flex layout with logo + links in separate divs */}
+          <div className="flex justify-between md:justify-around items-center h-24 md:h-28">
+            {/* Logo */}
+        <div className="flex-shrink-0">
+          <Link to="/" className="flex justify-center items-center gap-10">
+            <motion.img
+              src="/logo512.png"
+              alt="Antariksh Logo"
+              animate={{
+                scale: [1, 1.04, 1],
+                y: [0, -4, 0],
+                filter: [
+                  "drop-shadow(0px 0px 12px rgba(59,130,246,0.5))",
+                  "drop-shadow(0px 0px 24px rgba(59,130,246,0.9))",
+                  "drop-shadow(0px 0px 12px rgba(59,130,246,0.5))",
+                ],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              whileHover={{
+                scale: 1.15,
+                rotate: 3,
+                filter:
+                  "drop-shadow(0px 0px 30px rgba(96,165,250,1)) brightness(1.15)",
+              }}
+              className="h-40 md:h-50 lg:h-60 w-auto rounded-3xl transition-all duration-500"
+            />
           </Link>
-        ))}
-        <Link
-          to="/login"
-          onClick={() => setIsOpen(false)}
-          className="block w-full"
-        >
-          <button className="w-full px-6 py-2.5 text-sm font-medium text-white border border-white/30 rounded-full hover:bg-white/10 transition-all duration-200">
-            Login
-          </button>
-        </Link>
-      </div>
-    </motion.div>
-  );
-};
+        </div>
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center justify-around gap-12">
+              {navItems.map((item, i) => (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.07 * i, duration: 0.35 }}
+                >
+                  <Link
+                    to={item.path}
+                    className={`text-lg font-semibold transition-colors duration-150 ${
+                      location.pathname === item.path
+                        ? "text-white"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
 
-export default Navbar;
+            {/* Mobile Menu Toggle */}
+            <div className="md:hidden">
+              <button
+                ref={toggleRef}
+                aria-controls="mobile-menu"
+                aria-expanded={open}
+                aria-label={open ? "Close menu" : "Open menu"}
+                onClick={() => setOpen((v) => !v)}
+                className="inline-flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <svg
+                  className="w-8 h-8"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  {open ? (
+                    <path d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-40 md:hidden flex items-start justify-center px-4 pt-28"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={overlayVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+              variants={overlayVariants}
+            />
+            <motion.div
+              ref={panelRef}
+              id="mobile-menu"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md mx-auto bg-gray-900/95 rounded-2xl shadow-2xl ring-1 ring-white/6 overflow-hidden"
+              variants={panelVariants}
+            >
+              <div className="px-6 py-6 flex flex-col space-y-4">
+                {navItems.map((it) => (
+                  <motion.div key={it.name} variants={linkVariants}>
+                    <Link
+                      to={it.path}
+                      onClick={() => setOpen(false)}
+                      className="block text-lg font-semibold text-gray-200 hover:text-white px-3 py-3 rounded-lg transition-colors"
+                    >
+                      {it.name}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div style={{ height: NAV_HEIGHT }} aria-hidden />
+    </header>
+  );
+}
