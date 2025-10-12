@@ -1,220 +1,277 @@
-import React, { useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Stars, useTexture, Html } from "@react-three/drei";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/footer";
+import SlidingBackground from "../components/layout/RotatingBackground";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Sample Event Data
-const upcomingEvents = [
+// --- Event Data ---
+const events = [
   {
+    id: 1,
     title: "Astrohunt",
-    date: "Oct 20, 2025",
-    description: "Solve astronomy clues in this thrilling team treasure hunt.",
+    date: "10th October 2025",
+    description: "Team-based treasure hunt where teams solve astronomy-related clues to reach the final destination.",
     image: "https://res.cloudinary.com/doejabjai/image/upload/v1759938895/ChatGPT_Image_Oct_8_2025_09_24_20_PM_pkmux6.png",
-    route: "/events/astrohunt",
+    details: "Team-based event (2-3 members). In this event there will be a prelims for treasure hunt, where teams have to solve clues related to astronomy to find the next location and finally reach the final location as fast as they can. After clearing the prelims, they will enter the final round which will be a webhunt, where the team has to solve clues on their computer through the internet, enter their answers, and solve all the questions as fast as they can.",
   },
   {
+    id: 2,
     title: "Astroarena",
-    date: "Oct 22, 2025",
-    description: "Squid Game inspired elimination event with cosmic twist.",
+    date: "11th October 2025",
+    description: "A Squid Game-inspired team event with space-themed elimination challenges.",
     image: "https://res.cloudinary.com/doejabjai/image/upload/v1759938217/ChatGPT_Image_Oct_8_2025_08_34_09_PM_uzbdsw.png",
-    route: "/events/astroarena",
+    details: "Team-based event (2-3 members) inspired by Squid Games, where each round will be an elimination round. After passing through multiple rounds, one team finally wins the game. Each round is designed with a fun astro twist, making the competition engaging and challenging.",
+  },
+  {
+    id: 3,
+    title: "Prakshepan",
+    date: "12th October 2025",
+    description: "Design and launch your own water bottle rocket with creativity and precision.",
+    image: "https://res.cloudinary.com/doejabjai/image/upload/v1759938564/ChatGPT_Image_Oct_8_2025_09_18_54_PM_m8fkfa.png",
+    details: "Team-based Water Bottle Rocket event (2-3 members). In the prelims, teams have to bring their designs and materials for their rockets and present their ideas. The best concepts will advance to the final round, where teams will actually build and launch their rockets. They will be judged on flight time, distance covered, and their ability to keep a payload (an egg) safe.",
+  },
+  {
+    id: 4,
+    title: "Zathura",
+    date: "12th October 2025",
+    description: "Two-round event blends astrohunt with a space-themed board game for an unforgettable experience!",
+    image: "https://res.cloudinary.com/doejabjai/image/upload/v1759938564/ChatGPT_Image_Oct_8_2025_09_18_54_PM_m8fkfa.png",
+    details: "",
+  },
+  {
+    id: 5,
+    title: "Zathura",
+    date: "12th October 2025",
+    description: "Two-round event blends astrohunt with a space-themed board game for an unforgettable experience!",
+    image: "https://res.cloudinary.com/doejabjai/image/upload/v1759938564/ChatGPT_Image_Oct_8_2025_09_18_54_PM_m8fkfa.png",
+    details: "",
   },
 ];
 
-const techspardhaEvents = [
-  {
-    title: "Robotics Challenge",
-    date: "Nov 5, 2025",
-    description: "Build and program robots to complete tasks efficiently.",
-    image: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-    route: "/events/robotics-challenge",
-  },
-  {
-    title: "Coding Marathon",
-    date: "Nov 6, 2025",
-    description: "Solve real-world problems in a 24-hour hackathon.",
-    image: "https://cdn-icons-png.flaticon.com/512/1055/1055687.png",
-    route: "/events/coding-marathon",
-  },
-];
+// --- Rotating Earth Component ---
+function Earth() {
+  const earthRef = useRef();
+  const [texture] = useTexture(["/earth_texture.jpg"]);
 
-const workshops = [
-  {
-    title: "Telescope Making",
-    date: "Oct 28, 2025",
-    description: "Learn to craft your own telescope from scratch.",
-    image: "https://cdn-icons-png.flaticon.com/512/2932/2932672.png",
-    route: "/events/telescope-workshop",
-  },
-  {
-    title: "Astro Photography",
-    date: "Nov 1, 2025",
-    description: "Capture the stars with your own camera setup.",
-    image: "https://cdn-icons-png.flaticon.com/512/2922/2922263.png",
-    route: "/events/astro-photography",
-  },
-];
+  useFrame(() => {
+    earthRef.current.rotation.y += 0.002;
+  });
 
-// Star Background Component
-const StarBackground = () => {
-  const canvasRef = useRef(null);
+  return (
+    <mesh ref={earthRef} position={[0, 0, 0]}>
+      <sphereGeometry args={[4.0, 64, 64]} />
+      <meshStandardMaterial map={texture} />
+    </mesh>
+  );
+}
+
+// --- Floating Card Component ---
+function FloatingCard({ event, index, totalEvents, position, onClick }) {
+  const ref = useRef();
+  const [hover, setHover] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    let w = window.innerWidth;
-    let h = window.innerHeight;
-    canvas.width = w;
-    canvas.height = h;
-
-    const stars = Array.from({ length: 5000 }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      z: Math.random() * 1000,
-    }));
-
-    const drawStars = () => {
-      ctx.clearRect(0, 0, w, h);
-      stars.forEach((s) => {
-        const x = (s.x - w / 2) / (s.z * 0.001) + w / 2;
-        const y = (s.y - h / 2) / (s.z * 0.001) + h / 2;
-        const brightness = 1 - s.z / 1000;
-        ctx.fillStyle = `rgba(255,255,255,${brightness})`;
-        ctx.fillRect(x, y, 1, 1);
-        s.z -= 2;
-        if (s.z <= 0) s.z = 1000;
-      });
-      requestAnimationFrame(drawStars);
-    };
-    drawStars();
-
-    const handleResize = () => {
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = w;
-      canvas.height = h;
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 -z-10" />;
-};
+  // Floating animation only for non-mobile
+  useFrame(({ clock }) => {
+    if (!isMobile) {
+      const t = clock.getElapsedTime();
+      ref.current.position.y = position[1] + Math.sin(t * 0.8) * 0.3;
+    }
+  });
 
-const EventsPage = () => {
-  const navigate = useNavigate();
+  // Mobile stacked positions
+  const finalPosition = isMobile
+    ? [
+        0, // center X
+        3 - index * 2, // vertical stacking
+        -2, // slightly in front
+      ]
+    : position;
 
-  const renderEventSection = (title, events) => (
-    <section className="py-16 px-6 md:px-20">
-      <motion.h2
-        className="text-3xl md:text-5xl font-extrabold text-white text-center mb-12 drop-shadow-lg"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
+  return (
+    <group ref={ref} position={finalPosition} onClick={() => onClick(event)}>
+      <mesh
+        onPointerOver={() => !isMobile && setHover(true)}
+        onPointerOut={() => !isMobile && setHover(false)}
       >
-        {title}
-      </motion.h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {events.map((event, i) => (
-          <motion.div
-            key={i}
-            className="bg-white/10 backdrop-blur-md rounded-3xl p-6 flex flex-col justify-between shadow-lg hover:shadow-blue-400/50 cursor-pointer transform transition-all hover:scale-105"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: i * 0.1 }}
-            onClick={() => navigate(event.route)}
-          >
-            <img
-              src={event.image}
-              alt={event.title}
-              className="w-full h-48 md:h-56 object-cover rounded-2xl mb-4"
-            />
-            <div className="flex flex-col gap-2">
-              <h3 className="text-2xl font-bold text-white">{event.title}</h3>
-              <p className="text-white/70 text-sm">{event.date}</p>
-              <p className="text-white/80">{event.description}</p>
-            </div>
-            <motion.button
-              className="mt-4 px-6 py-2 rounded-full bg-blue-400 text-white font-semibold shadow-lg hover:shadow-blue-500/50 transition-transform hover:scale-105"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(event.route);
-              }}
-            >
-              Know More
-            </motion.button>
-          </motion.div>
-        ))}
-      </div>
-    </section>
+        <meshStandardMaterial
+          color={hover ? "#2563eb" : "#0f172a"}
+          transparent
+          opacity={0.85}
+          emissive={hover ? "#3b82f6" : "#000"}
+          emissiveIntensity={hover ? 0.6 : 0.2}
+        />
+      </mesh>
+      <Html zIndexRange={[0, 10]}>
+        <div onClick={() => onClick(event)}>
+          <HtmlCard event={event} />
+        </div>
+      </Html>
+    </group>
   );
+}
+
+// --- HTML Overlay for Event Info ---
+function HtmlCard({ event }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+      className="absolute bg-gray-800/90 text-white text-center p-3 rounded-xl border border-blue-400 shadow-md w-48 cursor-pointer select-none backdrop-blur-sm"
+      style={{ transform: "translate(-50%, -50%)", pointerEvents: "auto", zIndex: 20 }}
+    >
+      {event.image && (
+        <motion.img
+          src={event.image}
+          alt={event.title}
+          className="w-full h-24 object-cover rounded-lg mb-2 border border-blue-500/30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        />
+      )}
+      <p className="text-sm font-bold text-blue-300">{event.title}</p>
+      <p className="text-xs text-gray-300">{event.date}</p>
+      <p className="text-xs text-gray-400 mt-1">{event.description}</p>
+    </motion.div>
+  );
+}
+
+// --- Event Details Modal ---
+function EventDetailsModal({ event, onClose }) {
+  return (
+    <AnimatePresence>
+      {event && (
+        <motion.div
+          key="modal"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+        >
+          <motion.div
+            className="bg-gray-900 text-white p-6 rounded-2xl w-[90%] sm:w-[500px] border border-blue-500 shadow-lg"
+            initial={{ scale: 0.8, opacity: 0, y: 30 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 30 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+          >
+            <h2 className="text-xl font-bold text-blue-400 mb-2">{event.title}</h2>
+            <p className="text-sm text-gray-300 mb-1">{event.date}</p>
+            <p className="text-sm text-gray-400 mb-4">{event.details}</p>
+            <button
+              onClick={onClose}
+              className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium"
+            >
+              Close
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// --- Main Page ---
+export default function EventPage() {
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const positions = [
+    [6, 8, -4],
+    [-6, 4, 4],
+    [5, 3, 5],
+    [-5, 2, -5],
+    [0, 3, 6],
+  ];
 
   return (
     <>
       <Navbar />
-      <StarBackground />
+      <div className="fixed inset-0 -z-10 overflow-hidden bg-black">
+        <SlidingBackground />
+      </div>
 
-      {/* Hero Section */}
-      <section className="relative py-20 px-6 md:px-20 text-center overflow-hidden">
-        <motion.h1
-          className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-        >
-          Explore <span className="text-blue-400">Events</span>
-        </motion.h1>
-        <motion.p
-          className="max-w-3xl text-white/80 text-lg md:text-xl mx-auto leading-relaxed"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-        >
-          Discover upcoming events, competitions, workshops, and more. Click on an event to
-          learn more and participate!
-        </motion.p>
-      </section>
+      {/* --- Desktop 3D Layout --- */}
+      {!isMobile && (
+        <section className="w-full h-screen">
+          <Canvas camera={{ position: [0, 3, 12], fov: 60 }}>
+            <ambientLight intensity={4.0} />
+            <pointLight position={[10, 10, 10]} intensity={2} />
+            <Stars
+              radius={100}
+              depth={80}
+              count={5000}
+              factor={4}
+              saturation={0}
+              fade
+              speed={1}
+            />
+            <Earth />
+            {events.map((event, i) => (
+              <FloatingCard
+                key={event.id}
+                event={event}
+                index={i}
+                totalEvents={events.length}
+                position={positions[i]}
+                onClick={setSelectedEvent}
+              />
+            ))}
+            <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.3} />
+          </Canvas>
+        </section>
+      )}
 
-      {/* Sections */}
-      {renderEventSection("Upcoming Events", upcomingEvents)}
-      {renderEventSection("Techspardha Events", techspardhaEvents)}
-      {renderEventSection("Workshops & Learning", workshops)}
+      {/* --- Mobile Layout (Stacked Cards) --- */}
+      {isMobile && (
+        <section className="flex flex-col items-center w-full min-h-screen px-4 py-6 space-y-6 bg-black/80 backdrop-blur-sm">
+          {events.map((event) => (
+            <motion.div
+              key={event.id}
+              onClick={() => setSelectedEvent(event)}
+              className="bg-gray-800/90 text-white text-center p-4 rounded-2xl border border-blue-400 shadow-lg w-full max-w-sm cursor-pointer"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <img
+                src={event.image}
+                alt={event.title}
+                className="w-full h-32 object-cover rounded-lg mb-3 border border-blue-500/30"
+              />
+              <h3 className="text-lg font-bold text-blue-300">{event.title}</h3>
+              <p className="text-xs text-gray-300">{event.date}</p>
+              <p className="text-sm text-gray-400 mt-1">{event.description}</p>
+              <button className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm">
+                Know More
+              </button>
+            </motion.div>
+          ))}
+        </section>
+      )}
 
-      {/* CTA / Newsletter Section */}
-      <section className="py-20 px-6 md:px-20 text-center bg-white/5 backdrop-blur-md rounded-3xl mx-4 md:mx-20 my-16">
-        <motion.h2
-          className="text-3xl md:text-5xl font-extrabold text-white mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          Join Our Newsletter
-        </motion.h2>
-        <motion.p
-          className="text-white/80 mb-6 max-w-xl mx-auto"
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          Stay updated on all events, workshops, and exclusive content from Antariksh Society.
-        </motion.p>
-        <motion.button
-          className="px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-400 text-white font-semibold shadow-lg hover:shadow-purple-500/50 transition-transform hover:scale-105"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-        >
-          Subscribe Now
-        </motion.button>
-      </section>
-
+      <EventDetailsModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
       <Footer />
     </>
   );
-};
-
-export default EventsPage;
+}

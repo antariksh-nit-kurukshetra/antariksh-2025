@@ -114,7 +114,7 @@ export default function Navbar() {
   }, [open]);
 
   return (
-    <header className="relative">
+    <header className="relative ">
       {/* Navbar container */}
       <motion.nav
         initial={{ y: -12, opacity: 0 }}
