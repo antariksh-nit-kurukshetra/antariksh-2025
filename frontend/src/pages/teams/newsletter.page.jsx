@@ -163,7 +163,7 @@ const NewsletterPage = () => {
         <Button
           variant="primary"
           size="lg"
-          onClick={() => window.open("https://www.instagram.com/newsletter_team/", "_blank")}
+          onClick={() => window.open("https://www.instagram.com/antariksh_nitkkr/?hl=en", "_blank")}
           className="animate-pulse"
         >
           Visit Instagram

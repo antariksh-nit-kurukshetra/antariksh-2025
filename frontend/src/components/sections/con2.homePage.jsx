@@ -33,49 +33,56 @@ const galleryImages = [
 ];
 
 const Teams = [
-      {
-        name: "Kalpa",
-        description: "The official astronomy & astrophysics magazine team of Antariksh.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/kalpa_poster_mock.jpg",
-        link: "/teams/kalpa",
-      },
-      {
-        name: "Observatory",
-        description: "The stargazing and research division conducting space observations and night sky sessions.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/observatory_mock.jpg",
-        link: "/teams/observatory",
-      },
-      {
-        name: "Newsletter",
-        description: "The creative minds curating the monthly cosmic digest, news, and Antariksh insights.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/newsletter_mock.jpg",
-        link: "/teams/newsletter",
-      },
-      {
-        name: "Design & Media",
-        description: "The artistic souls shaping visuals, posters, and media for all Antariksh events.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/design_team_mock.jpg",
-        link: "/teams/design",
-      },
-      {
-        name: "Web & Tech",
-        description: "The backbone of our digital cosmos — developers who power Antariksh online.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/web_team_mock.jpg",
-        link: "/teams/web",
-      },
-      {
-        name: "Core & Management",
-        description: "The team that plans, coordinates, and executes the Antariksh vision each year.",
-        image:
-          "https://res.cloudinary.com/doejabjai/image/upload/v1759938219/core_team_mock.jpg",
-        link: "/teams/core",
-      },
-    ];
+  {
+    name: "Kalpaa - Facts & Research",
+    description:
+      "The knowledge hub of Antariksh — curating cosmic facts, astrophysics insights, and deep-space research pieces.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206069/Gemini_Generated_Image_cf8c0kcf8c0kcf8c_mvbs3z.png",
+    link: "/teams/kalpa",
+  },
+  {
+    name: "Observatory - Stargazing & Exploration",
+    description:
+      "From telescopes to night sky sessions — the team that connects Antariksh members directly with the universe.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206305/Gemini_Generated_Image_qrklj6qrklj6qrkl_ikqoi0.png",
+    link: "/teams/observatory",
+  },
+  {
+    name: "Newsletter - Cosmic Digest",
+    description:
+      "The storytellers of Antariksh — bringing monthly updates, cosmic news, and exclusive club features.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206448/Gemini_Generated_Image_v9hfksv9hfksv9hf_zo95nr.png",
+    link: "/teams/newsletter",
+  },
+  {
+    name: "Web & Tech - Digital Frontier",
+    description:
+      "Developers and tech wizards behind Antariksh’s digital presence — from websites to automation and AI.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206070/Gemini_Generated_Image_rfm126rfm126rfm1_1_hujpy3.png",
+    link: "/teams/web",
+  },
+  {
+    name: "Design & Media - Visual Universe",
+    description:
+      "The creative artists and designers crafting Antariksh’s visual identity, posters, and event media.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206072/Gemini_Generated_Image_clkgoclkgoclkgoc_plusik.png",
+    link: "/teams/design",
+  },
+  {
+    name: "Khagol - Quiz & Engagement",
+    description:
+      "The mind challengers — organizing quizzes, games, and interactive events to keep curiosity alive.",
+    image:
+      "https://res.cloudinary.com/doejabjai/image/upload/v1760206069/Gemini_Generated_Image_jfamkajfamkajfam_ymoxoo.png",
+    link: "/teams/khagol",
+  },
+];
+
 
 
 const HomeSections = () => {
@@ -204,7 +211,7 @@ const HomeSections = () => {
 
       {/* --- Events Section-- don't change you can make changes in resources --- */}
       <motion.section
-        className="px-6 md:px-20 bg-black/40 backdrop-blur-sm py-20"
+        className="px-6 md:px-5 bg-black/40 backdrop-blur-sm py-5"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -252,7 +259,7 @@ const HomeSections = () => {
 
       {/* --- Gallery Section -don't change you can make changes in resources --- */}
 <motion.section
-className="py-20 my-10 md:py-32 px-6 md:px-20 relative"
+className="py-5 my-5 md:py-20 px-6 md:px-20 relative"
 initial={{ opacity: 0, y: 80 }}
 whileInView={{ opacity: 1, y: 0 }}
 transition={{ duration: 1 }}
@@ -318,7 +325,7 @@ viewport={{ once: true }}
 
       {/* --- Teams Section --- */}
 <motion.section
-  className="relative  pb-40 px-6 md:px-20 overflow-hidden"
+  className="relative  pb-40 px-6 md:px-20 overflow-hidden pt-10"
   initial={{ opacity: 0, y: 60 }}
   whileInView={{ opacity: 1, y: 0 }}
   transition={{ duration: 1 }}

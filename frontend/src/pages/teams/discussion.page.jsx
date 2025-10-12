@@ -135,7 +135,7 @@ const DiscussionPage = () => {
         <Button
           variant="primary"
           size="lg"
-          onClick={() => window.open("https://www.instagram.com/khagol_discussion/", "_blank")}
+          onClick={() => window.open("https://www.instagram.com/antariksh_nitkkr/?hl=en", "_blank")}
           className="animate-pulse"
         >
           Visit Instagram
